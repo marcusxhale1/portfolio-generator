@@ -1,6 +1,6 @@
+const fs = require('fs');
 const inquirer = require('inquirer');
-
-console.log(inquirer)
+const generatePage = require('./page-template');
 
 const promptUser = () => {
   return inquirer.prompt([
@@ -16,66 +16,57 @@ const promptUser = () => {
           return false;
         }
       }
-    }, 
+    },
     {
-      type: 'input', 
-      name: 'github', 
-      message: 'Please enter your GitHub username. (Required)',
-      validate: nameInput => {
-        if (nameInput) {
+      type: 'input',
+      name: 'github',
+      message: 'Enter your GitHub Username (Required)',
+      validate: githubInput => {
+        if (githubInput) {
           return true;
         } else {
-          console.log('Please enter your GitHub username biotch!');
+          console.log('Please enter your GitHub username!');
           return false;
         }
       }
-    
     },
-
     {
       type: 'confirm',
       name: 'confirmAbout',
       message: 'Would you like to enter some information about yourself for an "About" section?',
       default: true
     },
-
-
     {
-      type: 'input', 
+      type: 'input',
       name: 'about',
-      message: 'Please tell us a little information about yourself',
-      when: ({ confirmAbout }) => {
-        if (confirmAbout) {
-          return true;
-        } else {
-          return false;
-        }
-      }
+      message: 'Provide some information about yourself:',
+      when: ({ confirmAbout }) => confirmAbout
     }
+  ]);
+};
 
-  ])}
-  const promptProject = portfolioData => {
-    console.log(`
-//   =================
-//   Add a New Project
-//  =============== ==
-  `);
-  portfolioData.projects = [];
- // If there's no 'projects' array property, create one
-if (!portfolioData.projects) {
-  portfolioData.projects = [];
-}
-  
-    return inquirer.prompt([
+const promptProject = portfolioData => {
+  console.log(`
+=================
+Add a New Project
+=================
+`);
+
+  // If there's no 'projects' array property, create one
+  if (!portfolioData.projects) {
+    portfolioData.projects = [];
+  }
+  return inquirer
+    .prompt([
       {
         type: 'input',
         name: 'name',
-        message: 'What is the name of your project?',
+        message: 'What is the name of your project? (Required)',
         validate: nameInput => {
           if (nameInput) {
             return true;
           } else {
-            console.log('Please enter your the name of your project!');
+            console.log('You need to enter a project name!');
             return false;
           }
         }
@@ -84,11 +75,11 @@ if (!portfolioData.projects) {
         type: 'input',
         name: 'description',
         message: 'Provide a description of the project (Required)',
-        validate: nameInput => {
-          if (nameInput) {
+        validate: descriptionInput => {
+          if (descriptionInput) {
             return true;
           } else {
-            console.log('Provide a god damn decription of the project please!');
+            console.log('You need to enter a project description!');
             return false;
           }
         }
@@ -96,18 +87,18 @@ if (!portfolioData.projects) {
       {
         type: 'checkbox',
         name: 'languages',
-        message: 'What did you build this project with? (Check all that apply)',
+        message: 'What did you this project with? (Check all that apply)',
         choices: ['JavaScript', 'HTML', 'CSS', 'ES6', 'jQuery', 'Bootstrap', 'Node']
       },
       {
         type: 'input',
         name: 'link',
         message: 'Enter the GitHub link to your project. (Required)',
-        validate: nameInput => {
-          if (nameInput) {
+        validate: linkInput => {
+          if (linkInput) {
             return true;
           } else {
-            console.log('Please enter your GitHub link to your project!');
+            console.log('You need to enter a project GitHub link!');
             return false;
           }
         }
@@ -124,15 +115,25 @@ if (!portfolioData.projects) {
         message: 'Would you like to enter another project?',
         default: false
       }
-      
-    ]);
-    
-  };
-  
-  promptUser()
+    ])
+    .then(projectData => {
+      portfolioData.projects.push(projectData);
+      if (projectData.confirmAddProject) {
+        return promptProject(portfolioData);
+      } else {
+        return portfolioData;
+      }
+    });
+};
+
+promptUser()
   .then(promptProject)
   .then(portfolioData => {
     console.log(portfolioData);
+    // will be uncommented in lesson 4
+    const pageHTML = generatePage(portfolioData);
+    fs.writeFile('./index.html', pageHTML, err => {
+     if (err) throw new Error(err);
+     console.log('Page created! Check out index.html in this directory to see it!');
+     });
   });
-  
-  
